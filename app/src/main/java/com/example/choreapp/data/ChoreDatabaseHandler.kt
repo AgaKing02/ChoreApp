@@ -7,8 +7,10 @@ import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import android.util.Log
 import com.example.choreapp.model.*
+import java.sql.Array
 import java.text.DateFormat
 import java.util.*
+import kotlin.collections.ArrayList
 
 class ChoreDatabaseHandler(context: Context) : SQLiteOpenHelper(
     context, DATABASE_NAME, null,
@@ -67,5 +69,51 @@ class ChoreDatabaseHandler(context: Context) : SQLiteOpenHelper(
         )
         return chore;
     }
+
+    fun readChores(): ArrayList<Chore> {
+        var db: SQLiteDatabase = readableDatabase
+        var list: ArrayList<Chore> = ArrayList();
+        var selectAll = "Select * from " + TABLE_NAME
+        var cursor: Cursor = db.rawQuery(selectAll, null);
+        if (cursor.moveToFirst()) {
+            do {
+                var chore = Chore()
+                chore.choreName = cursor.getString(cursor.getColumnIndex(KEY_CHORE_NAME))
+                chore.assignedTo = cursor.getString(cursor.getColumnIndex(KEY_CHORE_ASSIGNED_TO))
+                chore.assignedBy = cursor.getString(cursor.getColumnIndex(KEY_CHORE_ASSIGNED_BY))
+                chore.timeAssigned = cursor.getLong(cursor.getColumnIndex(KEY_CHORE_ASSIGNED_TIME))
+
+                list.add(chore)
+
+            } while (cursor.moveToNext())
+        }
+        return list;
+
+    }
+
+    fun updateChore(chore: Chore): Int {
+        var db: SQLiteDatabase = writableDatabase
+        var values:ContentValues= ContentValues()
+        values.put(KEY_CHORE_NAME,chore.choreName)
+        values.put(KEY_CHORE_ASSIGNED_BY,chore.assignedBy)
+        values.put(KEY_CHORE_ASSIGNED_TO,chore.assignedTo)
+        values.put(KEY_CHORE_ASSIGNED_TIME,System.currentTimeMillis())
+        return db.update(TABLE_NAME,values, KEY_ID+"=?", arrayOf(chore.id.toString()))
+
+    }
+    fun deleteChore(chore: Chore){
+        var db: SQLiteDatabase = writableDatabase
+        db.delete(TABLE_NAME, KEY_ID+"=?", arrayOf(chore.id.toString()))
+
+        db.close()
+
+    }
+    fun getChoresCount():Int{
+        var db: SQLiteDatabase = readableDatabase
+        var countQuery="Select * from "+ TABLE_NAME
+        var cursor:Cursor=db.rawQuery(countQuery,null)
+        return  cursor.count;
+    }
+
 
 }
